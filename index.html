@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Copie a Palavra</title>
+<style>
+body { font-family: sans-serif; text-align: center; background: #e0f2fe; margin: 0; padding: 0; }
+.container { max-width: 600px; margin: auto; padding: 20px; }
+#palavra-container { display: flex; justify-content: center; gap: 10px; position: relative; margin: 20px 0; }
+.letra-box { width: 60px; height: 60px; font-size: 2rem; border: 3px solid #3b82f6; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: white; color: #1e40af; }
+.correta { border-color: #22c55e; background: #dcfce7; color: #166534; animation: pulsar 0.3s; }
+.incorreta { border-color: #ef4444; background: #fee2e2; color: #b91c1c; animation: tremer 0.3s; }
+.tela { display: none; padding: 30px; }
+.visivel { display: block; }
+button { padding: 10px 20px; border: none; border-radius: 8px; background: #3b82f6; color: white; font-size: 1rem; cursor: pointer; }
+@keyframes pulsar { 50% { transform: scale(1.1); } }
+@keyframes tremer { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+</style>
+</head>
+<body>
+<div id="inicio" class="tela visivel">
+    <h1>Copie a Palavra</h1>
+    <p>Jogo para crianças de 4 a 6 anos<br>Objetivo: repetir letras da palavra mostrada com base no emoji.</p>
+    <button onclick="comecar()">Começar</button>
+</div>
+
+<div id="jogo" class="tela">
+    <div class="container">
+        <div id="emoji" style="font-size: 80px;">🍇</div>
+        <h2 id="gabarito">---</h2>
+        <div id="palavra-container"></div>
+        <p>Fase: <span id="fase">1</span> | Pontos: <span id="pontos">0</span></p>
+        <button onclick="novaPalavra()">Pular</button>
+    </div>
+</div>
+
+<script>
+const fases = [
+  [ { texto: "UVA", emoji: "🍇" }, { texto: "BOI", emoji: "🐂" }, { texto: "SOL", emoji: "☀️" } ],
+  [ { texto: "GATO", emoji: "🐱" }, { texto: "CASA", emoji: "🏠" }, { texto: "PATO", emoji: "🦆" } ],
+  [ { texto: "LIVRO", emoji: "📚" }, { texto: "PAPAI", emoji: "👨‍👦" }, { texto: "MAMAE", emoji: "👩‍👦" } ]
+];
+let faseAtual = 0, pontos = 0, estado = { palavra: null, i: 0 };
+const emoji = document.getElementById("emoji"), gabarito = document.getElementById("gabarito"),
+      c = document.getElementById("palavra-container"), faseEl = document.getElementById("fase"),
+      pontosEl = document.getElementById("pontos");
+
+function comecar() {
+  document.getElementById("inicio").classList.remove("visivel");
+  document.getElementById("jogo").classList.add("visivel");
+  novaPalavra();
+}
+
+function novaPalavra() {
+  estado.i = 0; c.innerHTML = "";
+  const palavras = fases[faseAtual];
+  estado.palavra = palavras[Math.random() * palavras.length | 0];
+  emoji.textContent = estado.palavra.emoji;
+  gabarito.textContent = estado.palavra.texto;
+  for (let l of estado.palavra.texto) {
+    const b = document.createElement("div");
+    b.className = "letra-box";
+    c.appendChild(b);
+  }
+}
+
+document.addEventListener("keydown", e => {
+  const l = e.key.toUpperCase();
+  if (!/^[A-Z]$/.test(l) || estado.i >= estado.palavra.texto.length) return;
+  const esp = document.createElement("div");
+  esp.className = "letra-box"; esp.textContent = l;
+  esp.style.cssText = `position:absolute;top:100px;left:${c.children[estado.i].offsetLeft}px;transition:.3s;z-index:99`;
+  c.appendChild(esp);
+  const certo = l === estado.palavra.texto[estado.i], box = c.children[estado.i];
+  setTimeout(() => {
+    if (certo) {
+      box.textContent = l; box.classList.add("correta");
+      esp.classList.add("correta"); esp.style.top = box.offsetTop + "px";
+      estado.i++;
+      setTimeout(() => c.removeChild(esp), 300);
+      if (estado.i === estado.palavra.texto.length) {
+        pontos++;
+        pontosEl.textContent = pontos;
+        if (pontos % 3 === 0 && faseAtual < fases.length - 1) {
+          faseAtual++; faseEl.textContent = faseAtual + 1;
+        }
+        setTimeout(novaPalavra, 800);
+      }
+    } else {
+      box.classList.add("incorreta"); esp.classList.add("incorreta");
+      setTimeout(() => { c.removeChild(esp); box.classList.remove("incorreta"); }, 300);
+    }
+  }, 10);
+});
+</script>
+</body>
+</html>
